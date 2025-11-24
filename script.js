@@ -132,7 +132,10 @@ if (loginForm) {
   loginForm.addEventListener('submit', function(e) {
     e.preventDefault();
 
-    const username = document.getElementById('username').value.trim();
+    const username = document.getElementById('username');
+     uname.addEveentListener('input', function(){
+        addDash(uname);
+     });
     const password = document.getElementById('password').value.trim();
 
     if (username === "" || password === "") {
@@ -146,6 +149,11 @@ if (loginForm) {
   });
 }
 
+//Automatically adds a hyphen after 3 numbers of the TRN are entered
+function addDash(uname){
+   uname.value = uname.value.slice(0, 3) + "-" + uname.value.slice(3, 6) + "-" + uname.value.slice(6, 9);
+}
+
 // ------------------ REGISTER ------------------ //
 const registerForm = document.getElementById('register-form');
 if (registerForm) {
@@ -155,7 +163,7 @@ if (registerForm) {
     const fullname = registerForm.fullname.value.trim();
     const dob = registerForm.dob.value;
     const email = registerForm.email.value.trim();
-    const username = registerForm.username.value.trim();
+    let username = registerForm.username.value.trim();
     const password = registerForm.password.value;
     const confirmPassword = registerForm['confirm-password'].value;
 
@@ -163,6 +171,10 @@ if (registerForm) {
       alert("Passwords do not match!");
       return;
     }
+
+     const uname = registerForm.username;
+     addDash(uname);
+     username = uname.value;
 
     const users = JSON.parse(localStorage.getItem('users')) || [];
     users.push({ fullname, dob, email, username, password });
@@ -402,3 +414,4 @@ document.addEventListener('DOMContentLoaded', () => {
   renderCheckoutItems();
   renderCheckoutSummary();
 });
+
