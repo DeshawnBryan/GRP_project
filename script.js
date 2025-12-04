@@ -133,8 +133,8 @@ if (loginForm) {
     e.preventDefault();
 
     const username = document.getElementById('username');
-     uname.addEveentListener('input', function(){
-        addDash(uname);
+     username.addEveentListener('input', function(){
+        addDash(username);
      });
     const password = document.getElementById('password').value.trim();
 
@@ -414,4 +414,5 @@ document.addEventListener('DOMContentLoaded', () => {
   renderCheckoutItems();
   renderCheckoutSummary();
 });
+
 
