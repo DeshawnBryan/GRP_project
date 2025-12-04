@@ -1,8 +1,8 @@
-/* Name: Deshawn Bryan 
-   Student ID: 2403216
+/* 
    Lecturer/Tutor: Sirisha Badhika
    Published: 16th November 2025
 */
+
 
 // ------------------ CART FUNCTIONS ------------------ //
 //Retrieves cart from local storage, returns empty array if no cart exists
@@ -132,10 +132,8 @@ if (loginForm) {
   loginForm.addEventListener('submit', function(e) {
     e.preventDefault();
 
-    const username = document.getElementById('username');
-     username.addEveentListener('input', function(){
-        addDash(username);
-     });
+    const usernameInput = document.getElementById('username');
+    const username = usernameInput.value.trim();
     const password = document.getElementById('password').value.trim();
 
     if (username === "" || password === "") {
@@ -148,11 +146,7 @@ if (loginForm) {
     window.location.href = "product.html";
   });
 }
-
-//Automatically adds a hyphen after 3 numbers of the TRN are entered
-function addDash(uname){
-   uname.value = uname.value.slice(0, 3) + "-" + uname.value.slice(3, 6) + "-" + uname.value.slice(6, 9);
-}
+ 
 
 // ------------------ REGISTER ------------------ //
 const registerForm = document.getElementById('register-form');
@@ -172,9 +166,6 @@ if (registerForm) {
       return;
     }
 
-     const uname = registerForm.username;
-     addDash(uname);
-     username = uname.value;
 
     const users = JSON.parse(localStorage.getItem('users')) || [];
     users.push({ fullname, dob, email, username, password });
@@ -211,8 +202,7 @@ if (checkoutForm) {
     }
 
     alert(`Thank you ${name}! Your order has been placed.`);
-    localStorage.removeItem('cart');
-    window.location.href = "index.html";
+    window.location.href = "invoice.html";
   });
 
   const cancelBtn = document.getElementById('cancel-btn');
@@ -413,6 +403,348 @@ document.addEventListener('DOMContentLoaded', () => {
   renderCart();
   renderCheckoutItems();
   renderCheckoutSummary();
+});
+
+//ADD
+// ------------------ INVOICE FUNCTIONS ------------------ //
+
+// Generate and save invoice after successful checkout
+function generateInvoice(customerData, cart) {
+  const invoiceNumber = `INV-${Date.now()}`;
+  const invoiceDate = new Date().toISOString();
+  const loggedTRN = sessionStorage.getItem('loggedInTRN') || 'GUEST';
+  
+  let subtotalSum = 0;
+  let discountSum = 0;
+  let taxSum = 0;
+  let totalSum = 0;
+
+  const items = cart.map(item => {
+    const subtotal = item.price * item.qty;
+    const discount = subtotal * DISCOUNT_RATE;
+    const tax = (subtotal - discount) * TAX_RATE;
+    const total = subtotal - discount + tax;
+
+    subtotalSum += subtotal;
+    discountSum += discount;
+    taxSum += tax;
+    totalSum += total;
+
+    return {
+      name: item.name,
+      price: item.price,
+      qty: item.qty,
+      subtotal: subtotal,
+      discount: discount,
+      tax: tax,
+      total: total,
+      img: item.img
+    };
+  });
+
+  const invoice = {
+    invoiceNumber,
+    invoiceDate,
+    trn: loggedTRN,
+    customerName: customerData.name,
+    customerAddress: customerData.address,
+    customerCity: customerData.city,
+    customerZip: customerData.zip,
+    items,
+    subtotal: subtotalSum,
+    totalDiscount: discountSum,
+    totalTax: taxSum,
+    grandTotal: totalSum
+  };
+
+  // Save to localStorage
+  const invoices = getLS('Invoices');
+  invoices.push(invoice);
+  setLS('Invoices', invoices);
+
+  return invoice;
+}
+
+// Display invoice on invoice.html page
+function displayInvoice() {
+  const invoiceDisplay = document.getElementById('invoice-container');
+  if (!invoiceDisplay) return;
+
+  const invoices = getLS('Invoices');
+  if (invoices.length === 0) {
+    
+    invoiceDisplay.innerHTML = '<p>No invoices found.</p>';
+    return;
+  }
+
+  // Display the most recent invoice
+  const invoice = invoices[invoices.length - 1];
+  
+  let itemsHTML = '';
+  invoice.items.forEach(item => {
+    itemsHTML += `
+      <tr>
+        <td>${item.name}</td>
+        <td>${item.qty}</td>
+        <td>${formatCurrency(item.price)}</td>
+        <td>${formatCurrency(item.subtotal)}</td>
+        <td>${formatCurrency(item.discount)}</td>
+        <td>${formatCurrency(item.tax)}</td>
+        <td>${formatCurrency(item.total)}</td>
+      </tr>
+    `;
+  });
+
+  invoiceDisplay.innerHTML = `
+    <div class="invoice-container">
+      <div class="invoice-header">
+        <h2>INVOICE</h2>
+        <p><strong>Invoice #:</strong> ${invoice.invoiceNumber}</p>
+        <p><strong>Date:</strong> ${new Date(invoice.invoiceDate).toLocaleDateString()}</p>
+      </div>
+      
+      <div class="invoice-customer">
+        <h3>Bill To:</h3>
+        <p><strong>${invoice.customerName}</strong></p>
+        <p>${invoice.customerAddress}</p>
+        <p>${invoice.customerCity}, ${invoice.customerZip}</p>
+      </div>
+
+      <table class="invoice-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Subtotal</th>
+            <th>Discount</th>
+            <th>Tax</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsHTML}
+        </tbody>
+      </table>
+
+      <div class="invoice-summary">
+        <p><strong>Subtotal:</strong> ${formatCurrency(invoice.subtotal)}</p>
+        <p><strong>Total Discount (10%):</strong> ${formatCurrency(invoice.totalDiscount)}</p>
+        <p><strong>Total Tax (15%):</strong> ${formatCurrency(invoice.totalTax)}</p>
+        <p class="invoice-grand-total"><strong>Grand Total:</strong> ${formatCurrency(invoice.grandTotal)}</p>
+      </div>
+
+      <div class="invoice-actions">
+        <button class="btn btn-primary" onclick="printInvoice()">Print Invoice</button>
+        <button class="btn btn-secondary" onclick="window.location.href='product.html'">Continue Shopping</button>
+      </div>
+    </div>
+  `;
+}
+
+// Print invoice
+function printInvoice() {
+  window.print();
+}
+
+// Get user-specific invoices
+function GetUserInvoices(trn) {
+  const userInvoicesDiv = document.getElementById('user-invoices');
+  if (!userInvoicesDiv) return;
+
+  const allInvoices = getLS('Invoices');
+  const userInvoices = allInvoices.filter(inv => inv.trn === trn);
+
+  if (userInvoices.length === 0) {
+    userInvoicesDiv.innerHTML = '<p>You have no invoices yet.</p>';
+    return;
+  }
+
+  let html = '';
+  userInvoices.forEach(invoice => {
+    html += `
+      <div class="invoice-summary">
+        <p><strong>Invoice #:</strong> ${invoice.invoiceNumber}</p>
+        <p><strong>Date:</strong> ${new Date(invoice.invoiceDate).toLocaleDateString()}</p>
+        <p><strong>Total:</strong> ${formatCurrency(invoice.grandTotal)}</p>
+        <p><strong>Items:</strong> ${invoice.items.length}</p>
+      </div>
+    `;
+  });
+
+  userInvoicesDiv.innerHTML = html;
+}
+
+// ------------------ DASHBOARD FUNCTIONS ------------------ //
+
+// Display all invoices on dashboard
+function displayAllInvoices() {
+  const invoicesListDiv = document.getElementById('invoices-list');
+  if (!invoicesListDiv) return;
+
+  const allInvoices = getLS('Invoices');
+  
+  if (allInvoices.length === 0) {
+    invoicesListDiv.innerHTML = '<p>No invoices in system.</p>';
+    return;
+  }
+
+  let html = '';
+  allInvoices.forEach(invoice => {
+    html += `
+      <div class="invoice-summary">
+        <p><strong>Invoice #:</strong> ${invoice.invoiceNumber}</p>
+        <p><strong>Customer:</strong> ${invoice.customerName}</p>
+        <p><strong>Date:</strong> ${new Date(invoice.invoiceDate).toLocaleDateString()}</p>
+        <p><strong>Total:</strong> ${formatCurrency(invoice.grandTotal)}</p>
+      </div>
+    `;
+  });
+
+  invoicesListDiv.innerHTML = html;
+}
+
+// Display gender frequency chart
+function displayGenderChart() {
+  const genderChartDiv = document.getElementById('gender-chart');
+  if (!genderChartDiv) return;
+
+  const users = getLS('RegistrationData');
+  
+  if (users.length === 0) {
+    genderChartDiv.innerHTML = '<p>No user data available.</p>';
+    return;
+  }
+
+  const genderCount = { Male: 0, Female: 0, Other: 0 };
+  
+  users.forEach(user => {
+    if (genderCount.hasOwnProperty(user.gender)) {
+      genderCount[user.gender]++;
+    }
+  });
+
+  const total = users.length;
+  let html = '';
+
+  Object.keys(genderCount).forEach(gender => {
+    const count = genderCount[gender];
+    const percentage = total > 0 ? (count / total * 100).toFixed(1) : 0;
+    const width = `${percentage}%`;
+    
+    html += `
+      <div class="chart-row">
+        <span class="chart-label">${gender}</span>
+        <div class="chart-bar" style="width: ${width}">
+          ${count} 
+        </div>
+        (${percentage}%)
+      </div>
+    `;
+  });
+
+  genderChartDiv.innerHTML = html;
+}
+
+// Display age group frequency chart
+function displayAgeChart() {
+  const ageChartDiv = document.getElementById('age-chart');
+  if (!ageChartDiv) return;
+
+  const users = getLS('RegistrationData');
+  
+  if (users.length === 0) {
+    ageChartDiv.innerHTML = '<p>No user data available.</p>';
+    return;
+  }
+
+  const ageGroups = {
+    '18-25': 0,
+    '26-35': 0,
+    '36-45': 0,
+    '46-55': 0,
+    '56+': 0
+  };
+
+  users.forEach(user => {
+    const age = calculateAge(user.dob);
+    
+    if (age >= 18 && age <= 25) ageGroups['18-25']++;
+    else if (age >= 26 && age <= 35) ageGroups['26-35']++;
+    else if (age >= 36 && age <= 45) ageGroups['36-45']++;
+    else if (age >= 46 && age <= 55) ageGroups['46-55']++;
+    else if (age >= 56) ageGroups['56+']++;
+  });
+
+  const total = users.length;
+  let html = '';
+
+  Object.keys(ageGroups).forEach(group => {
+    const count = ageGroups[group];
+    const percentage = total > 0 ? (count / total * 100).toFixed(1) : 0;
+    const width = `${percentage}%`;
+    
+    html += `
+      <div class="chart-row">
+        <span class="chart-label">${group} years</span>
+        <div class="chart-bar" style="width: ${width}">
+          ${count} 
+        </div>
+            <span style="margin-left: 10px;">(${percentage}%)</span>
+      </div>
+    `;
+  });
+
+  ageChartDiv.innerHTML = html;
+}
+
+// Initialize dashboard
+function initializeDashboard() {
+  displayGenderChart();
+  displayAgeChart();
+  displayAllInvoices();
+}
+
+// Update checkout to generate invoice
+const originalCheckoutSubmit = checkoutForm?.addEventListener;
+if (checkoutForm) {
+  checkoutForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const name = document.getElementById('name').value.trim();
+    const address = document.getElementById('address').value.trim();
+    const city = document.getElementById('city').value.trim();
+    const zip = document.getElementById('zip').value.trim();
+    const amount = document.getElementById('amount').value.trim();
+
+    if (!name || !address || !city || !zip || !amount) {
+      alert("Please fill out all fields correctly.");
+      return;
+    }
+
+    const cart = getCart();
+    const customerData = { name, address, city, zip };
+    
+    // Generate invoice before clearing cart
+    generateInvoice(customerData, cart);
+
+    alert(`Thank you ${name}! Your order has been placed.`);
+    localStorage.removeItem('cart');
+    window.location.href = "invoice.html";
+  });
+}
+
+
+
+// Run dashboard initialization on page load
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('gender-chart')) {
+    initializeDashboard();
+  }
+  
+  if (document.getElementById('invoice-container')) {
+    displayInvoice();
+  }
 });
 
 
