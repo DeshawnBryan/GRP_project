@@ -38,6 +38,14 @@ function addToCart(name, price, img) {
   alert(`${name} added to cart!`);
 }
 
+// Clear all items from cart
+function clearCart() {
+  localStorage.removeItem('cart');       // Remove cart from localStorage
+  updateCartBadge();                     // Update navbar badge
+  if (typeof renderCart === 'function') renderCart(); // Re-render cart table
+}
+
+
 updateCartBadge();
 
 // ------------------ CART PAGE ------------------ //
@@ -746,5 +754,6 @@ document.addEventListener('DOMContentLoaded', () => {
     displayInvoice();
   }
 });
+
 
 
