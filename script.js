@@ -1,9 +1,12 @@
-/* 
-   Lecturer/Tutor: Sirisha Badhika
-   Published: 16th November 2025
+/* Group Members: Deshawn Bryan- 2403216
+                    Brittania Hawes- 2408218
+                    Nicholas Smith- 2106718
+                    Davian Williams- 2209507
+      Tutor: Mrs Sirisha Badhika
+      Tutorial Time: Thursdays 6pm - 8pm
 */
 
-
+   
 // ------------------ CART FUNCTIONS ------------------ //
 //Retrieves cart from local storage, returns empty array if no cart exists
 function getCart() {
@@ -754,6 +757,7 @@ document.addEventListener('DOMContentLoaded', () => {
     displayInvoice();
   }
 });
+
 
 
 
