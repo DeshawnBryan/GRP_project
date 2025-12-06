@@ -1,6 +1,11 @@
-/*Name: Davian Williams*/
-/*ID: 2209507*/
-/* Root Variables */
+/* Group Members: Deshawn Bryan- 2403216
+                    Brittania Hawes- 2408218
+                    Nicholas Smith- 2106718
+                    Davian Williams- 2209507
+      Tutor: Mrs Sirisha Badhika
+      Tutorial Time: Thursdays 6pm - 8pm
+*/
+
 :root {
   --primary: rgb(12, 35, 56);
   --accent: rgb(0, 190, 200);
@@ -549,4 +554,5 @@ flex-wrap: wrap;
   border-radius:6px; 
   background:#fff; 
 }
+
 
