@@ -588,6 +588,13 @@ function GetUserInvoices(trn) {
 
 // ------------------ DASHBOARD FUNCTIONS ------------------ //
 
+  
+    const loggedTRN = sessionStorage.getItem('loggedInTRN');
+    if (loggedTRN) {
+      setTimeout(()=> { GetUserInvoices(loggedTRN); }, 250);
+    }
+  
+
 // Display all invoices on dashboard
 function displayAllInvoices() {
   const invoicesListDiv = document.getElementById('invoices-list');
@@ -757,6 +764,7 @@ document.addEventListener('DOMContentLoaded', () => {
     displayInvoice();
   }
 });
+
 
 
 
